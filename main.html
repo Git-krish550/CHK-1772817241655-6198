@@ -3,38 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>AI Disaster Resource Optimizer</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
-/* GLOBAL */
-
 *{
 box-sizing:border-box;
 margin:0;
 padding:0;
-font-family:Arial, Helvetica, sans-serif;
+font-family:Arial;
 }
 
 body{
 background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:#222;
-transition:0.3s;
 }
 
-/* SIDEBAR */
+/* Sidebar */
 
 .sidebar{
 width:240px;
-background:linear-gradient(180deg,#1976d2,#0d47a1);
+background:#1976d2;
 color:white;
 position:fixed;
 top:0;
 bottom:0;
 padding:20px;
-box-shadow:5px 0 20px rgba(0,0,0,0.3);
 }
 
 .sidebar h2{
@@ -46,23 +42,20 @@ margin-bottom:40px;
 padding:15px;
 cursor:pointer;
 border-radius:10px;
-margin-bottom:5px;
-transition:0.3s;
 }
 
 .nav-item:hover{
 background:rgba(255,255,255,0.2);
-transform:translateX(5px);
 }
 
-/* MAIN */
+/* Main */
 
 .main{
 margin-left:240px;
 padding:30px;
 }
 
-/* HEADER */
+/* Header */
 
 .header{
 display:flex;
@@ -72,21 +65,15 @@ margin-bottom:20px;
 }
 
 .toggleBtn{
-padding:10px 14px;
+padding:8px 12px;
 background:#1976d2;
 color:white;
 border:none;
 border-radius:8px;
 cursor:pointer;
-transition:0.3s;
 }
 
-.toggleBtn:hover{
-background:#0d47a1;
-transform:scale(1.05);
-}
-
-/* FORM */
+/* Form */
 
 .form{
 background:white;
@@ -96,7 +83,6 @@ margin-bottom:20px;
 display:flex;
 flex-direction:column;
 gap:10px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
 .form input,
@@ -113,15 +99,9 @@ color:white;
 border:none;
 border-radius:10px;
 cursor:pointer;
-transition:0.3s;
 }
 
-.form button:hover{
-background:#0d47a1;
-transform:scale(1.05);
-}
-
-/* CARDS */
+/* Cards */
 
 .cards{
 display:grid;
@@ -136,15 +116,9 @@ padding:15px;
 border-radius:12px;
 text-align:center;
 box-shadow:0 5px 15px rgba(0,0,0,0.1);
-transition:0.3s;
 }
 
-.card:hover{
-transform:translateY(-5px);
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* RISK */
+/* Risk */
 
 .risk{
 padding:10px;
@@ -158,17 +132,16 @@ font-weight:bold;
 .Medium{background:orange}
 .High{background:red}
 
-/* CHART */
+/* Chart */
 
 .chart-container{
 background:white;
 padding:20px;
 border-radius:12px;
 margin-top:20px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* MAP */
+/* Maps */
 
 .map-container{
 margin-top:20px;
@@ -182,19 +155,9 @@ width:100%;
 height:300px;
 border:none;
 border-radius:10px;
-box-shadow:0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* EMERGENCY */
-
-.emergency-container{
-display:flex;
-flex-direction:column;
-gap:10px;
-margin-top:10px;
-}
-
-/* DARK MODE */
+/* Dark mode */
 
 .dark{
 background:#121212;
@@ -205,7 +168,18 @@ color:white;
 .dark .form,
 .dark .chart-container{
 background:#1f1f1f;
+}
+
+/* Voice Button */
+
+.voice-btn{
+background:#ff5252;
 color:white;
+border:none;
+padding:10px;
+border-radius:50%;
+cursor:pointer;
+font-size:18px;
 }
 
 </style>
@@ -222,28 +196,20 @@ color:white;
 <div class="nav-item">🗺 Map</div>
 <div class="nav-item">⚙ Settings</div>
 
-<h4 style="margin-top:20px;">📞 Emergency Contacts</h4>
+<h4>📞 Emergency Contacts</h4>
 
-<div class="emergency-container">
-
-<div class="card">🚑 Ambulance<br>102</div>
-<div class="card">🚒 Fire Brigade<br>101</div>
-<div class="card">🚔 Police<br>100</div>
-<div class="card">🆘 Disaster Helpline<br>108</div>
+<div class="card">🚑 Ambulance<br>102</div><br>
+<div class="card">🚒 Fire<br>101</div><br>
+<div class="card">🚔 Police<br>100</div><br>
+<div class="card">🆘 Disaster<br>108</div>
 
 </div>
-
-</div>
-
 
 <div class="main">
 
 <div class="header">
-
 <h1>Dashboard</h1>
-
 <button class="toggleBtn" onclick="toggleDark()">🌙 Dark Mode</button>
-
 </div>
 
 <p id="time"></p>
@@ -271,7 +237,13 @@ color:white;
 
 <input type="number" id="people" placeholder="Population">
 
+<div style="display:flex;gap:10px">
+
 <input type="text" id="location" placeholder="Location">
+
+<button class="voice-btn" onclick="startVoice()">🎤</button>
+
+</div>
 
 <button onclick="predict()">Analyze Disaster</button>
 
@@ -300,6 +272,7 @@ src="https://maps.google.com/maps?q=India&output=embed">
 <h3>🚑 Rescue Route</h3>
 
 <input id="rescueStart" placeholder="Rescue Team Location">
+
 <input id="rescueEnd" placeholder="Disaster Location">
 
 <button onclick="findRoute()">Find Route</button>
@@ -316,35 +289,51 @@ src="https://maps.google.com/maps?q=India&output=embed">
 
 </div>
 
-
 <script>
 
 let chart
+
+/* CLOCK */
+
+setInterval(()=>{
+document.getElementById("time").innerHTML =
+new Date().toLocaleString()
+},1000)
+
+/* DARK MODE */
 
 function toggleDark(){
 document.body.classList.toggle("dark")
 }
 
-setInterval(()=>{
-document.getElementById("time").innerHTML=
-new Date().toLocaleString()
-},1000)
+/* VOICE INPUT */
 
-function getWeather(location){
+function startVoice(){
 
-fetch("https://wttr.in/"+location+"?format=3")
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
-.then(response=>response.text())
-
-.then(data=>{
-
-if(data.toLowerCase().includes("rain")){
-alert("⚠ Possible Flood Risk")
+if(!SpeechRecognition){
+alert("Voice recognition not supported in this browser")
+return
 }
 
-})
+const recognition = new SpeechRecognition()
+
+recognition.lang="en-IN"
+
+recognition.start()
+
+recognition.onresult=function(event){
+
+const text = event.results[0][0].transcript
+
+document.getElementById("location").value=text
 
 }
+
+}
+
+/* PREDICT */
 
 function predict(){
 
@@ -373,46 +362,39 @@ let helicopters=Math.ceil(people/500)
 let riskScore=(severity*2)+(people/500)
 
 let riskLevel="Low"
-
 if(riskScore>5) riskLevel="Medium"
 if(riskScore>10) riskLevel="High"
 
 let riskEl=document.getElementById("risk")
+
 riskEl.className="risk "+riskLevel
+
 riskEl.innerHTML="⚠ "+riskLevel+" Risk"
 
-let priority="Normal"
-
-if(people>1000 && severity==3){
-priority="CRITICAL"
-alert("🚨 Emergency! Immediate response required.")
-}
-
-riskEl.innerHTML+="<br>Priority: "+priority
-
 document.getElementById("summary").innerHTML=
-"📍 "+location+" | 👥 "+people+" people affected"
+`📍 ${location} | 👥 ${people} people affected`
 
 let dashboardHTML=`
 
-<div class="card">🍞 Food Packets<br><br>${food}</div>
-<div class="card">💧 Water<br><br>${water}</div>
+<div class="card">🍞 Food Packets<br>${food}</div>
+<div class="card">💧 Water<br>${water}</div>
 <div class="card">🏥 Medical Kits<br>${medical}</div>
 <div class="card">🏠 Shelters<br>${shelters}</div>
 <div class="card">🚑 Rescue Teams<br>${rescue}</div>
 <div class="card">👷 Volunteers<br>${volunteers}</div>
 <div class="card">🚑 Ambulances<br>${ambulances}</div>
-<div class="card">🚒 Firetrucks<br>${firetrucks}</div>
 <div class="card">🏥 Medical Teams<br>${medicalteams}</div>
 <div class="card">🚁 Helicopters<br>${helicopters}</div>
 `
 
+if(!["Flood","Cyclone","Tsunami"].includes(disaster)){
+dashboardHTML+=`<div class="card">🚒 Firetrucks<br>${firetrucks}</div>`
+}
+
 document.getElementById("dashboard").innerHTML=dashboardHTML
 
-document.getElementById("mapFrame").src=
+document.getElementById("mapFrame").src =
 "https://maps.google.com/maps?q="+location+"&output=embed"
-
-getWeather(location)
 
 let ctx=document.getElementById("resourceChart").getContext("2d")
 
@@ -432,35 +414,33 @@ backgroundColor:"rgba(25,118,210,0.7)"
 
 }
 
+/* ROUTE FINDER */
+
 function findRoute(){
 
 let start=document.getElementById("rescueStart").value
 let end=document.getElementById("rescueEnd").value
 
-if(!start || !end){
-alert("Enter both locations")
-return
-}
-
-document.getElementById("routeMap").src=
+document.getElementById("routeMap").src =
 "https://maps.google.com/maps?saddr="+start+"&daddr="+end+"&output=embed"
 
-document.getElementById("routeResult").innerHTML=
+document.getElementById("routeResult").innerHTML =
 "Fastest route from "+start+" to "+end
 
 }
 
+/* DOWNLOAD REPORT */
+
 function downloadReport(){
 
 let data=document.getElementById("dashboard").innerText
+
 let blob=new Blob([data],{type:"text/plain"})
 
 let a=document.createElement("a")
 
 a.href=URL.createObjectURL(blob)
-
 a.download="disaster_report.txt"
-
 a.click()
 
 }
