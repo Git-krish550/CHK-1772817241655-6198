@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Disaster Resource Optimizer - Backend Powered</title>
+
+<title>AI Disaster Resource Optimizer</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -169,38 +170,16 @@ color:white;
 background:#1f1f1f;
 }
 
-/* Loading spinner */
-.loading {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255,255,255,.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-}
+/* Voice Button */
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Status messages */
-.status-message {
-    padding: 10px;
-    border-radius: 5px;
-    margin: 10px 0;
-}
-
-.status-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.status-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+.voice-btn{
+background:#ff5252;
+color:white;
+border:none;
+padding:10px;
+border-radius:50%;
+cursor:pointer;
+font-size:18px;
 }
 
 </style>
@@ -209,28 +188,31 @@ background:#1f1f1f;
 <body>
 
 <div class="sidebar">
+
 <h2>🚨 Disaster Optimizer</h2>
 
 <div class="nav-item">🏠 Home</div>
 <div class="nav-item">📊 Dashboard</div>
 <div class="nav-item">🗺 Map</div>
 <div class="nav-item">⚙ Settings</div>
-<h4>📞Emergency contacts:</h4>
-<div id="emergencyContacts"></div>
-</div>
 
+<h4>📞 Emergency Contacts</h4>
+
+<div class="card">🚑 Ambulance<br>102</div><br>
+<div class="card">🚒 Fire<br>101</div><br>
+<div class="card">🚔 Police<br>100</div><br>
+<div class="card">🆘 Disaster<br>108</div>
+
+</div>
 
 <div class="main">
 
 <div class="header">
 <h1>Dashboard</h1>
-<div class="summary"></div>
 <button class="toggleBtn" onclick="toggleDark()">🌙 Dark Mode</button>
 </div>
 
 <p id="time"></p>
-
-<div id="statusMessage"></div>
 
 <div class="form">
 
@@ -255,9 +237,15 @@ background:#1f1f1f;
 
 <input type="number" id="people" placeholder="Population">
 
+<div style="display:flex;gap:10px">
+
 <input type="text" id="location" placeholder="Location">
 
-<button onclick="predict()" id="analyzeBtn">Analyze Disaster</button>
+<button class="voice-btn" onclick="startVoice()">🎤</button>
+
+</div>
+
+<button onclick="predict()">Analyze Disaster</button>
 
 <div id="risk" class="risk"></div>
 
@@ -266,7 +254,6 @@ background:#1f1f1f;
 <button onclick="downloadReport()">Download Report</button>
 
 </div>
-
 
 <div class="cards" id="dashboard"></div>
 
@@ -302,332 +289,161 @@ src="https://maps.google.com/maps?q=India&output=embed">
 
 </div>
 
-
 <script>
 
 let chart
-const API_BASE = 'http://localhost:8000/api'
 
-/* Dark Mode */
+/* CLOCK */
+
+setInterval(()=>{
+document.getElementById("time").innerHTML =
+new Date().toLocaleString()
+},1000)
+
+/* DARK MODE */
 
 function toggleDark(){
 document.body.classList.toggle("dark")
 }
 
-/* Clock */
+/* VOICE INPUT */
 
-setInterval(()=>{
-document.getElementById("time").innerHTML=
-new Date().toLocaleString()
-},1000)
+function startVoice(){
 
-/* Status Messages */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
-function showStatus(message, type = 'success') {
-    const statusEl = document.getElementById('statusMessage')
-    statusEl.className = `status-message status-${type}`
-    statusEl.textContent = message
-    statusEl.style.display = 'block'
-    
-    setTimeout(() => {
-        statusEl.style.display = 'none'
-    }, 5000)
+if(!SpeechRecognition){
+alert("Voice recognition not supported in this browser")
+return
 }
 
-/* Load Emergency Contacts */
+const recognition = new SpeechRecognition()
 
-async function loadEmergencyContacts() {
-    try {
-        const response = await fetch(`${API_BASE}/emergency-contacts/`)
-        const contacts = await response.json()
-        
-        const contactsHTML = contacts.map(contact => 
-            `<div class="card">${contact.icon} ${contact.name}<br>${contact.number}</div><br>`
-        ).join('')
-        
-        document.getElementById('emergencyContacts').innerHTML = contactsHTML
-    } catch (error) {
-        console.error('Error loading emergency contacts:', error)
-        // Fallback to hardcoded contacts
-        document.getElementById('emergencyContacts').innerHTML = `
-            <div class="card">🚑ambulance<br>102</div><br>
-            <div class="card">🚒firebrigade<br>101</div><br>
-            <div class="card">🚔 Police<br>100</div><br>
-            <div class="card">🆘 Disaster-Helpline<br>108</div>
-        `
-    }
+recognition.lang="en-IN"
+
+recognition.start()
+
+recognition.onresult=function(event){
+
+const text = event.results[0][0].transcript
+
+document.getElementById("location").value=text
+
 }
 
-/* Predict */
-
-async function predict(){
-    const analyzeBtn = document.getElementById('analyzeBtn')
-    const originalText = analyzeBtn.textContent
-    
-    try {
-        analyzeBtn.innerHTML = '<span class="loading"></span> Analyzing...'
-        analyzeBtn.disabled = true
-
-        let disaster = document.getElementById("disaster").value
-        let severity = parseInt(document.getElementById("severity").value)
-        let people = parseInt(document.getElementById("people").value)
-        let location = document.getElementById("location").value
-
-        if(!people || !location){
-            showStatus("Please fill all fields", 'error')
-            return
-        }
-
-        // Call Django API
-        const response = await fetch(`${API_BASE}/analyze/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                disaster_type: disaster,
-                severity: severity,
-                population: people,
-                location: location
-            })
-        })
-
-        if (!response.ok) {
-            throw new Error('Analysis failed')
-        }
-
-        const data = await response.json()
-        
-        // Update risk level
-        let riskEl = document.getElementById("risk")
-        riskEl.className = "risk " + data.risk_level
-        riskEl.innerHTML = "⚠ " + data.risk_level + " Risk<br>Priority: " + data.priority
-
-        // Update summary
-        document.getElementById("summary").innerHTML = data.summary
-
-        // Update dashboard with resources
-        const resources = data.resources
-        let dashboardHTML = `
-            <div class="card">🍞 Food Packets<br><br>${resources.food_packets}</br><div class="unit">packets</div>
-            </div>
-            <div class="card">💧 Water<br><br>${resources.water_liters}</br><div class="unit">Liters</div>
-            </div>
-            <div class="card">🏥 Medical Kits<br>${resources.medical_kits}</div>
-            <div class="card">🏠 Shelters<br>${resources.shelters}</div>
-            <div class="card">🚑 Rescue Teams<br>${resources.rescue_teams}</div>
-            <div class="card">👷 Volunteers<br>${resources.volunteers}</div>
-            <div class="card">🚑 Ambulances<br>${resources.ambulances}</div>
-        `
-        
-        if (!["Flood", "Cyclone", "Tsunami"].includes(disaster)) {
-            dashboardHTML += `<div class="card">🚒Firetrucks<br>${resources.firetrucks}</div>`
-        }
-        
-        dashboardHTML += `
-            <div class="card">🏥 Medical Teams<br>${resources.medical_teams}</div>
-            <div class="card">🚁 Helicopters<br>${resources.helicopters}</div>
-        `
-
-        document.getElementById("dashboard").innerHTML = dashboardHTML
-
-        // Update map
-        document.getElementById("mapFrame").src = data.map_url
-
-        // Update chart
-        let ctx = document.getElementById("resourceChart").getContext("2d")
-        if(chart) chart.destroy()
-
-        chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ["Food", "Water", "Medical", "Shelters", "Rescue", "Volunteers"],
-                datasets: [{
-                    label: "Resources",
-                    data: [
-                        resources.food_packets, 
-                        resources.water_liters, 
-                        resources.medical_kits, 
-                        resources.shelters, 
-                        resources.rescue_teams, 
-                        resources.volunteers
-                    ],
-                    backgroundColor: "rgba(25,118,210,0.7)"
-                }]
-            }
-        })
-
-        // Show weather alert if flood risk
-        if (data.weather && data.weather.flood_risk) {
-            showStatus("⚠ Possible Flood Risk detected in weather data", 'error')
-        }
-
-        showStatus("Disaster analysis completed successfully!", 'success')
-
-    } catch (error) {
-        console.error('Error:', error)
-        showStatus("Failed to analyze disaster. Please try again.", 'error')
-        
-        // Fallback to client-side calculation
-        predictFallback()
-    } finally {
-        analyzeBtn.textContent = originalText
-        analyzeBtn.disabled = false
-    }
 }
 
-/* Fallback predict function (original client-side logic) */
+/* PREDICT */
 
-function predictFallback(){
-    let disaster=document.getElementById("disaster").value
-    let severity=parseInt(document.getElementById("severity").value)
-    let people=parseInt(document.getElementById("people").value)
-    let location=document.getElementById("location").value
+function predict(){
 
-    if(!people || !location){
-        alert("Fill all fields")
-        return
-    }
+let disaster=document.getElementById("disaster").value
+let severity=parseInt(document.getElementById("severity").value)
+let people=parseInt(document.getElementById("people").value)
+let location=document.getElementById("location").value
 
-    /* Resource Calculation */
-    let food=Math.ceil((people*severity)/2)
-    let water=Math.ceil((people*severity)*1.5)
-    let medical=Math.ceil(people/10)*severity
-    let shelters=Math.ceil(people/25)
-    let rescue=Math.ceil((people*severity)/8)
-    let volunteers=Math.ceil(people/20)
-
-    let ambulances=Math.ceil(people/100)
-    let firetrucks=Math.ceil(people/200)
-    let medicalteams=Math.ceil(people/150)
-    let helicopters=Math.ceil(people/500)
-
-    /* Risk */
-    let riskScore=(severity*2)+(people/500)
-    let riskLevel="Low"
-    if(riskScore>5) riskLevel="Medium"
-    if(riskScore>10) riskLevel="High"
-
-    let riskEl=document.getElementById("risk")
-    riskEl.className="risk "+riskLevel
-    riskEl.innerHTML="⚠ "+riskLevel+" Risk"
-
-    /* Priority */
-    let priority="Normal"
-    if(people>1000 && severity==3){
-        priority="CRITICAL"
-        alert("🚨 Emergency! Immediate response required.")
-    }
-    riskEl.innerHTML+="<br>Priority: "+priority
-
-    /* Summary */
-    document.getElementById("summary").innerHTML=
-    "📍 "+location+" | 👥 "+people+" people affected"
-
-    /* Dashboard */
-    let dashboardHTML=`
-    <div class="card">🍞 Food Packets<br><br>${food}</br><div class="unit">packets</div>
-    </div>
-    <div class="card">💧 Water<br><br>${water}</br><div class="unit">Liters</div>
-    </div>
-    <div class="card">🏥 Medical Kits<br>${medical}</div>
-    <div class="card">🏠 Shelters<br>${shelters}</div>
-    <div class="card">🚑 Rescue Teams<br>${rescue}</div>
-    <div class="card">👷 Volunteers<br>${volunteers}</div>
-    <div class="card">🚑 Ambulances<br>${ambulances}</div>`
-    
-    if(!["Flood","Cyclone","Tsunami"].includes(disaster)){
-        dashboardHTML+='<div class="card">🚒Firetrucks<br>${firetrucks}</div>'
-    }
-    
-    dashboardHTML+=`
-    <div class="card">🏥 Medical Teams<br>${medicalteams}</div>
-    <div class="card">🚁 Helicopters<br>${helicopters}</div>
-    `
-
-    document.getElementById("dashboard").innerHTML=dashboardHTML
-
-    /* Map */
-    document.getElementById("mapFrame").src=
-    "https://maps.google.com/maps?q="+location+"&output=embed"
-
-    /* Chart */
-    let ctx=document.getElementById("resourceChart").getContext("2d")
-    if(chart) chart.destroy()
-
-    chart=new Chart(ctx,{
-        type:'bar',
-        data:{
-            labels:["Food","Water","Medical","Shelters","Rescue","Volunteers"],
-            datasets:[{
-                label:"Resources",
-                data:[food,water,medical,shelters,rescue,volunteers],
-                backgroundColor:"rgba(25,118,210,0.7)"
-            }]
-        }
-    })
+if(!people || !location){
+alert("Fill all fields")
+return
 }
 
-/* Route Finder */
+let food=Math.ceil((people*severity)/2)
+let water=Math.ceil((people*severity)*1.5)
+let medical=Math.ceil(people/10)*severity
+let shelters=Math.ceil(people/25)
+let rescue=Math.ceil((people*severity)/8)
+let volunteers=Math.ceil(people/20)
 
-async function findRoute(){
-    let start=document.getElementById("rescueStart").value
-    let end=document.getElementById("rescueEnd").value
+let ambulances=Math.ceil(people/100)
+let firetrucks=Math.ceil(people/200)
+let medicalteams=Math.ceil(people/150)
+let helicopters=Math.ceil(people/500)
 
-    if(!start || !end){
-        showStatus("Enter both locations", 'error')
-        return
-    }
+let riskScore=(severity*2)+(people/500)
 
-    try {
-        const response = await fetch(`${API_BASE}/calculate-route/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                start: start,
-                end: end
-            })
-        })
+let riskLevel="Low"
+if(riskScore>5) riskLevel="Medium"
+if(riskScore>10) riskLevel="High"
 
-        if (!response.ok) {
-            throw new Error('Route calculation failed')
-        }
+let riskEl=document.getElementById("risk")
 
-        const data = await response.json()
-        
-        document.getElementById("routeMap").src = data.map_url
-        document.getElementById("routeResult").innerHTML = data.summary
-        showStatus("Route calculated successfully!", 'success')
+riskEl.className="risk "+riskLevel
 
-    } catch (error) {
-        console.error('Error:', error)
-        // Fallback to client-side route calculation
-        document.getElementById("routeMap").src =
-        "https://maps.google.com/maps?saddr="+start+"&daddr="+end+"&output=embed"
-        document.getElementById("routeResult").innerHTML =
-        "Fastest route from "+start+" to "+end
-    }
+riskEl.innerHTML="⚠ "+riskLevel+" Risk"
+
+document.getElementById("summary").innerHTML=
+`📍 ${location} | 👥 ${people} people affected`
+
+let dashboardHTML=`
+
+<div class="card">🍞 Food Packets<br>${food}</div>
+<div class="card">💧 Water<br>${water}</div>
+<div class="card">🏥 Medical Kits<br>${medical}</div>
+<div class="card">🏠 Shelters<br>${shelters}</div>
+<div class="card">🚑 Rescue Teams<br>${rescue}</div>
+<div class="card">👷 Volunteers<br>${volunteers}</div>
+<div class="card">🚑 Ambulances<br>${ambulances}</div>
+<div class="card">🏥 Medical Teams<br>${medicalteams}</div>
+<div class="card">🚁 Helicopters<br>${helicopters}</div>
+`
+
+if(!["Flood","Cyclone","Tsunami"].includes(disaster)){
+dashboardHTML+=`<div class="card">🚒 Firetrucks<br>${firetrucks}</div>`
 }
 
-/* Download Report */
+document.getElementById("dashboard").innerHTML=dashboardHTML
+
+document.getElementById("mapFrame").src =
+"https://maps.google.com/maps?q="+location+"&output=embed"
+
+let ctx=document.getElementById("resourceChart").getContext("2d")
+
+if(chart) chart.destroy()
+
+chart=new Chart(ctx,{
+type:'bar',
+data:{
+labels:["Food","Water","Medical","Shelters","Rescue","Volunteers"],
+datasets:[{
+label:"Resources",
+data:[food,water,medical,shelters,rescue,volunteers],
+backgroundColor:"rgba(25,118,210,0.7)"
+}]
+}
+})
+
+}
+
+/* ROUTE FINDER */
+
+function findRoute(){
+
+let start=document.getElementById("rescueStart").value
+let end=document.getElementById("rescueEnd").value
+
+document.getElementById("routeMap").src =
+"https://maps.google.com/maps?saddr="+start+"&daddr="+end+"&output=embed"
+
+document.getElementById("routeResult").innerHTML =
+"Fastest route from "+start+" to "+end
+
+}
+
+/* DOWNLOAD REPORT */
 
 function downloadReport(){
-    let data=document.getElementById("dashboard").innerText
-    let blob=new Blob([data],{type:"text/plain"})
 
-    let a=document.createElement("a")
-    a.href=URL.createObjectURL(blob)
-    a.download="disaster_report.txt"
-    a.click()
+let data=document.getElementById("dashboard").innerText
+
+let blob=new Blob([data],{type:"text/plain"})
+
+let a=document.createElement("a")
+
+a.href=URL.createObjectURL(blob)
+a.download="disaster_report.txt"
+a.click()
+
 }
-
-/* Initialize */
-
-document.addEventListener('DOMContentLoaded', function() {
-    loadEmergencyContacts()
-})
 
 </script>
 
